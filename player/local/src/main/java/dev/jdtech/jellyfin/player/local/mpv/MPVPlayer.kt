@@ -741,10 +741,20 @@ class MPVPlayer(
     override fun addMediaItems(index: Int, mediaItems: MutableList<MediaItem>) {
         internalMediaItems.addAll(index, mediaItems)
         mediaItems.forEach { mediaItem ->
+            // --- 新增：动态判断并修改 User-Agent ---
+            val uriString = mediaItem.localConfiguration?.uri?.toString() ?: ""
+            if (uriString.contains(".baidupcs.com")) {
+                mpvLib.setOptionString("user-agent", "pan.baidu.com")
+            } else {
+                // 如果是其他网盘或普通视频，恢复默认 UA 防止被拦截
+                mpvLib.setOptionString("user-agent", "Findroid/1.0") 
+            }
+            // ----------------------------------------
+
             mpvLib.command(
                 arrayOf(
                     "loadfile",
-                    "${mediaItem.localConfiguration?.uri}",
+                    uriString, // 这里可以直接使用上面提取的 uriString
                     "insert-at",
                     index.toString(),
                 )
