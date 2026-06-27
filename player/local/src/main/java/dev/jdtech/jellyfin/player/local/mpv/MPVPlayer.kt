@@ -854,10 +854,19 @@ class MPVPlayer(
     /** Prepares the player. */
     override fun prepare() {
         internalMediaItems.forEachIndexed { index, mediaItem ->
+            // --- 新增：动态判断并修改 User-Agent ---
+            val uriString = mediaItem.localConfiguration?.uri?.toString() ?: ""
+            if (uriString.contains(".baidupcs.com")) {
+                mpvLib.setOptionString("user-agent", "pan.baidu.com")
+            } else {
+                mpvLib.setOptionString("user-agent", "Findroid/1.0")
+            }
+            // ----------------------------------------
+
             mpvLib.command(
                 arrayOf(
                     "loadfile",
-                    "${mediaItem.localConfiguration?.uri}",
+                    uriString, // 使用提取的 uriString
                     if (index == 0) "replace" else "append",
                 )
             )
