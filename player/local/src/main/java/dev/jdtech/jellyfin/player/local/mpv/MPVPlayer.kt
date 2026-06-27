@@ -849,19 +849,14 @@ class MPVPlayer(
     /** Prepares the player. */
     override fun prepare() {
         internalMediaItems.forEachIndexed { index, mediaItem ->
-            // --- 新增：动态判断并修改 User-Agent ---
-            val uriString = mediaItem.localConfiguration?.uri?.toString() ?: ""
-            if (uriString.contains(".baidupcs.com")) {
-                mpvLib.setOptionString("user-agent", "pan.baidu.com")
-            } else {
-                mpvLib.setOptionString("user-agent", "Findroid/1.0")
-            }
-            // ----------------------------------------
+            
+            // 全局强制篡改 MPV 的 User-Agent，通杀 302 重定向
+            mpvLib.setOptionString("user-agent", "pan.baidu.com")
 
             mpvLib.command(
                 arrayOf(
                     "loadfile",
-                    uriString, // 使用提取的 uriString
+                    "${mediaItem.localConfiguration?.uri}",
                     if (index == 0) "replace" else "append",
                 )
             )
