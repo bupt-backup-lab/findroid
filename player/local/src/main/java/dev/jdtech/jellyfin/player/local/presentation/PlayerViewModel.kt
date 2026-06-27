@@ -152,8 +152,25 @@ constructor(
             val renderersFactory =
                 DefaultRenderersFactory(application)
                     .setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON)
+
+            // --- 新增：构建带有 UA 拦截功能的 MediaSourceFactory ---
+            val httpDataSourceFactory = androidx.media3.datasource.DefaultHttpDataSource.Factory()
+            val resolvingDataSourceFactory = androidx.media3.datasource.ResolvingDataSource.Factory(httpDataSourceFactory) { dataSpec ->
+                if (dataSpec.uri.toString().contains(".baidupcs.com")) {
+                    // 命中百度直链，强制重写 User-Agent
+                    dataSpec.buildUpon().setHttpRequestHeaders(mapOf("User-Agent" to "pan.baidu.com")).build()
+                } else {
+                    // 其他链接保持原样
+                    dataSpec
+                }
+            }
+            val mediaSourceFactory = androidx.media3.exoplayer.source.DefaultMediaSourceFactory(application)
+                .setDataSourceFactory(resolvingDataSourceFactory)
+            // --------------------------------------------------------
+
             player =
                 ExoPlayer.Builder(application, renderersFactory)
+                    .setMediaSourceFactory(mediaSourceFactory) // <--- 新增：注入自定义的 Factory
                     .setAudioAttributes(audioAttributes, true)
                     .setTrackSelector(trackSelector)
                     .setSeekBackIncrementMs(
